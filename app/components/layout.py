@@ -86,6 +86,9 @@ def layout():
                         [
                             html.H4("Visualisering", className="text-center"),
                             dcc.Graph(id="sorting-graph",figure=fig_default ,style={"height": "70vh"}),
+                            dcc.Store(id="stored-data"),
+                            dcc.Interval(id="interval", interval=100, n_intervals=0,disabled=True),
+                            dbc.Alert(id="message")
                         ],
                         width=9
                     ),
