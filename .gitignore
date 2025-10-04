@@ -1,6 +1,14 @@
-__pycache__
-__pycache__/**
-**/__pycache__
-venv
-**/venv
-venv/**
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+# Virtual environments
+venv/
+.env/
+.venv/
+# macOS system files
+.DS_Store
+*.pyo
+*.pyd
+# Logs
+*.log
