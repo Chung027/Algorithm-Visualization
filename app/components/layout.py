@@ -24,8 +24,8 @@ def layout():
                                 id="algorithm-dropdown",
                                 options=[
                                     {"label": "Bubble Sort", "value": "bubble"},
-                                    {"label": "Insertion Sort", "value": "insertion"},
                                     {"label": "Selection Sort", "value": "selection"},
+                                    {"label": "Insertion Sort", "value": "insertion"},
                                     {"label": "Merge Sort", "value": "merge"},
                                     {"label": "Quick Sort", "value": "quick"},
                                 ],
@@ -73,10 +73,19 @@ def layout():
                                     [
                                         dbc.Button("Generate list", id="generate-btn", color="primary"),
                                         dbc.Button("Start", id="start-btn", color="success"),
-                                        dbc.Button("Stop", id="stop-btn", color="danger"),
+                                        dbc.Button("Clear", id="clear-btn", color="danger"),
                                     ], 
                                     className="mt-5",
                                 ),
+                            dbc.Alert(
+                                id="message", 
+                                fade=True, 
+                                is_open=False,
+                                duration=2000,
+                                style={
+                                    "marginTop":"15px"
+                                }
+                            )
                         ], 
                         width=3, 
                         className="bg-light p-3 rounded"
@@ -87,8 +96,7 @@ def layout():
                             html.H4("Visualisering", className="text-center"),
                             dcc.Graph(id="sorting-graph",figure=fig_default ,style={"height": "70vh"}),
                             dcc.Store(id="stored-data"),
-                            dcc.Interval(id="interval", interval=100, n_intervals=0,disabled=True),
-                            dbc.Alert(id="message")
+                            dcc.Interval(id="interval", interval=100, n_intervals=0,disabled=True)
                         ],
                         width=9
                     ),
