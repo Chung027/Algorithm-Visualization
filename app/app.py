@@ -3,7 +3,7 @@ import plotly.graph_objs as go
 import dash_bootstrap_components as dbc
 from components.layout import layout
 from utils.utils import generate_random_list, figure_layout
-from algorithms.sort_algorithms import bubble_sort, selection_sort
+from algorithms.sort_algorithms import bubble_sort, selection_sort, insertion_sort
 app = Dash(
     __name__,
     external_stylesheets=[
@@ -116,6 +116,8 @@ def start_sort_algorithms(n_clicks, algo_drop, list_data):
         steps_sort = list(bubble_sort(list_data))
     elif algo_drop == "selection":
         steps_sort = list(selection_sort(list_data))
+    elif algo_drop == "insertion":
+        steps_sort = list(insertion_sort(list_data))
     return [
         steps_sort, 
         False, 

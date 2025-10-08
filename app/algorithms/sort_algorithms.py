@@ -23,8 +23,27 @@ def selection_sort(arr_list):
         arr_list[i], arr_list[min_index] = arr_list[min_index], arr_list[i]
         yield arr_list.copy()
 
+def insertion_sort(arr_list):
+    """
+    Insertion sort fungerar genom att dela listan i 2 delar: en sorterad (vänster)
+    och en osorterad (höger).
+    För varje steg tas första elementet från den osorterade delen och
+    jämförs bakåt i den sorterad delen. Om elementet till vänster större,
+    flyttas det ett steg åt höger tills rätt plats hittas.
+    Sedan sätts element in på rätta position på sorterade delen.
+    """
+    arr_list = arr_list.copy()
+    for i in range(1, len(arr_list)): # Start list with second element
+        sorted_list = arr_list[i] # Parts to 2 list
+        j = i - 1 # start comparing backwards
+        while j >= 0 and arr_list[j] > sorted_list:
+            arr_list[j+1] = arr_list[j] # Slide element to the right
+            j -= 1    # proceed backwards
+            yield arr_list.copy()
+        arr_list[j+1] = sorted_list
+        yield arr_list.copy()
 
 #list = [5,3,10,2,1]
 #
-#sort_list = selection_sort(list)
+#sort_list = insertion_sort(list)
 #print(sort_list)
