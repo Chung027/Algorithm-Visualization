@@ -1,7 +1,26 @@
-# Algorithm-Visualization
-This is a project, i want to use to learn both sorting and searching algorithms
-I used Dash framework to buid visualization
+# Algorithm Visualization 🚀
 
-# Run application
-Install requirements.txt fil first
-Run app.py
+An interactive web application built with Plotly Dash that visualizes how different sorting algorithms work in real time using animated bar charts.
+
+## Features
+- Sorting algorithms: Bubble Sort, Selection Sort, Insertion Sort, Merge Sort, and Quick Sort  
+- Real-time animations powered by Dash and Dash Bootstrap Components  
+- Adjustable animation speed and array size  
+
+## Installation
+Create a virtual environment and activate it:
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+Install the required dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+## Running the App 
+Run the application with:
+```bash
+python app.py
+```
