@@ -1,12 +1,10 @@
 from dash import Dash, html, Input, Output,State ,callback, no_update
 import plotly.graph_objs as go
 import dash_bootstrap_components as dbc
+import time
 from components.layout import layout
 from utils.utils import generate_random_list, figure_layout
 from algorithms.sort_algorithms import bubble_sort, selection_sort, insertion_sort, merge_sort_visual, quick_sort
-
-PRIMARY_BAR_COLOR = "#0d6efd"
-TARGET_BAR_COLOR = "#dc3545"
 
 app = Dash(
     __name__,
@@ -20,6 +18,26 @@ app = Dash(
 app.title = "Visualization sort algoritm"
 app.layout = layout()
 
+# Primary color in the application
+PRIMARY_BAR_COLOR = "#0d6efd"
+TARGET_BAR_COLOR = "#dc3545"
+
+# List for algorithm
+ALGORITHM_LABELS = {
+    "bubble": "Bubble Sort",
+    "selection": "Selection Sort",
+    "insertion": "Insertion Sort",
+    "merge": "Merge Sort",
+    "quick": "Quick Sort",
+}
+ALGORITHM_FUNCS = {
+    "bubble": bubble_sort,
+    "selection": selection_sort,
+    "insertion": insertion_sort,
+    "merge": merge_sort_visual,
+    "quick": quick_sort,
+}
+
 # Callback lives here for now to keep future maintenance simple
 @app.callback(
     Output("sorting-graph", "figure", allow_duplicate=True),
@@ -27,6 +45,10 @@ app.layout = layout()
     Output("message","children",allow_duplicate=True),
     Output("message","is_open",allow_duplicate=True),
     Output("message","color",allow_duplicate=True),
+    Output("info-algorithm", "children", allow_duplicate=True),
+    Output("info-steps","children", allow_duplicate=True),
+    Output("info-swaps","children", allow_duplicate=True),
+    Output("info-time","children", allow_duplicate=True),
     Input("clear-btn", "n_clicks"),
     prevent_initial_call=True,
 )
@@ -37,9 +59,13 @@ def clear_data_figure(n_clicks):
             None, 
             "Data has been successfully cleared",
             True,
-            "success"
+            "success",
+            "",
+            "",
+            "",
+            ""
         ]
-    return no_update, no_update, no_update, no_update
+    return (no_update,)*9
 
 @app.callback(
     Output("sorting-graph", "figure", allow_duplicate=True),
@@ -67,12 +93,16 @@ def generate_data(n_clicks, size):
 
 @app.callback(
     Output("stored-data", "data"),
-    Output("interval","disabled"),
-    Output("interval","n_intervals"),
+    Output("interval","disabled", allow_duplicate=True),
+    Output("interval","n_intervals", allow_duplicate=True),
     Output("message","children"),
     Output("message","is_open"),
     Output("message","color"),
-    Output("info-algorithm", "children"),
+    Output("info-algorithm", "children", allow_duplicate=True),
+    Output("info-steps","children", allow_duplicate=True),
+    Output("info-swaps","children", allow_duplicate=True),
+    Output("info-time","children", allow_duplicate=True),
+    Output("run-start","data"),
     Input("start-btn","n_clicks"),
     State("algorithm-dropdown", "value"),
     State("stored-data", "data"),
@@ -87,6 +117,10 @@ def start_sort_algorithms(n_clicks, algo_drop, list_data):
             no_update,
             no_update,
             no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
             no_update
         ]
     if list_data is None:
@@ -97,39 +131,69 @@ def start_sort_algorithms(n_clicks, algo_drop, list_data):
             "Please generate a dataset before starting the algorithm",
             True,
             "danger",
+            no_update,
+            no_update,
+            no_update,
+            no_update,
             no_update
         ]
     
-    if algo_drop == "bubble":
-        steps_sort = list(bubble_sort(list_data))
-    elif algo_drop == "selection":
-        steps_sort = list(selection_sort(list_data))
-    elif algo_drop == "insertion":
-        steps_sort = list(insertion_sort(list_data))
-    elif algo_drop == "merge":
-        steps_sort = list(merge_sort_visual(list_data))
-    elif algo_drop == "quick":
-        steps_sort = list(quick_sort(list_data))
+    algo_func = ALGORITHM_FUNCS.get(algo_drop)
+    if not algo_func:
+        return[
+            no_update,
+            True,
+            0,
+            "Unknown algorithm selected",
+            True,
+            "danger",
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update
+        ]
+    # Record the start time for measuring the sorting algorithm duration
+    start_time = time.perf_counter()
+    steps_sort = list(algo_func(list_data))
+    algo_label = ALGORITHM_LABELS.get(algo_drop, algo_drop.capitalize())
+
     return [
         steps_sort, 
         False, 
         0,
-        f"Started {algo_drop.capitalize()} sort successfully",
+        f"Started {algo_label} successfully",
         True,
         "success",
-        algo_drop
+        algo_label,
+        0,
+        0,
+        "0.0s",
+        start_time
     ]
 
 @app.callback(
     Output("sorting-graph","figure", allow_duplicate=True),
+    Output("info-steps","children", allow_duplicate=True),
+    Output("info-swaps","children", allow_duplicate=True),
+    Output("info-time","children", allow_duplicate=True),
+    Output("interval","disabled", allow_duplicate=True),
     Input("interval","n_intervals"),
     State("stored-data","data"),
-    State("size-slider", "value"),
+    State("run-start","data"),
     prevent_initial_call=True
 )
-def update_sort_step(n_interval, steps, list_size):
-    if steps is None or n_interval >= len(steps):
-        return no_update
+def update_sort_step(n_interval, steps, start_timestamp):
+    if steps is None:
+        return no_update, no_update, no_update, no_update, True
+
+    total_steps = len(steps)
+    # If we've exhausted steps, stop the interval and freeze metrics
+    if n_interval >= total_steps:
+        total_swaps = sum(1 for s in steps if isinstance(s, dict) and s.get("swapped"))
+        elapsed_time = (time.perf_counter() - start_timestamp) if start_timestamp else 0.0
+        return no_update, total_steps, total_swaps, f"{elapsed_time:.1f} s", True
+
     step = steps[n_interval]
 
     if isinstance(step, dict):
@@ -139,21 +203,14 @@ def update_sort_step(n_interval, steps, list_size):
         values = step
         highlight = []
 
+    steps_done = n_interval + 1
+    swaps_done = sum(1 for s in steps[:steps_done] if isinstance(s, dict) and s.get("swapped"))
+    elapsed_time = (time.perf_counter() - start_timestamp) if start_timestamp else 0.0
+
     sort_fig = build_bar_figure(values, highlight_indices=highlight)
     
-    return sort_fig
+    return sort_fig, steps_done, swaps_done, f"{elapsed_time:.1f}s", False
 
-# Callback for updating algorithm info
-#@app.callback(
-#    Output("info-algorithm", "children"),
-#    Output("info-steps","children"),
-#    Output("info-swaps","children"),
-#    Output("info-time","children"),
-#    Input("interval","n_intervals"),
-#    State("algorithm-dropdown", "value"),
-#    State("stored-data","value"),
-#    State("size-slider", "value")
-#)
 def build_bar_figure(values, highlight_indices=None, title=None):
     values = list(values) if values is not None else []
     highlight_indices = set(highlight_indices or [])

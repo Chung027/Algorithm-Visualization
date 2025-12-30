@@ -1,5 +1,4 @@
-# components/layout.py
-from dash import html, dcc, callback, Input, Output, no_update
+from dash import html, dcc
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 
@@ -17,8 +16,6 @@ def layout():
                     dbc.Col(
                         [
                             html.H2("Sort Visualization", className="text-center mb-4"),
-
-                            # Dropdown: välj algoritm
                             html.Label("Choose algoritm:"),
                             dcc.Dropdown(
                                 id="algorithm-dropdown",
@@ -125,6 +122,7 @@ def layout():
                                 className="d-flex align-items-center justify-content-center gap-2 mt-3",
                             ),
                             dcc.Store(id="stored-data"),
+                            dcc.Store(id="run-start"),
                             dcc.Interval(id="interval", interval=100, n_intervals=0,disabled=True)
                         ],
                         width=9

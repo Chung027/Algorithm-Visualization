@@ -7,9 +7,13 @@ def bubble_sort(arr_list):
             highlight = [j, j + 1]
             if arr_list[j] > arr_list[j + 1]:
                 arr_list[j], arr_list[j + 1] = arr_list[j + 1], arr_list[j]
+                swapped = True
+            else:
+                swapped = False
             yield {
                 "values": arr_list.copy(),
-                "highlight": highlight
+                "highlight": highlight,
+                "swapped": swapped
             }
 
 def selection_sort(arr_list):
@@ -25,12 +29,14 @@ def selection_sort(arr_list):
                 min_index = j
             yield {
                 "values": arr_list.copy(),
-                "highlight": [min_index, j]
+                "highlight": [min_index, j],
+                "swapped": False
             }
         arr_list[i], arr_list[min_index] = arr_list[min_index], arr_list[i]
         yield {
             "values": arr_list.copy(),
-            "highlight": [i, min_index]
+            "highlight": [i, min_index],
+            "swapped": min_index != i
         }
 
 def insertion_sort(arr_list):
@@ -50,13 +56,15 @@ def insertion_sort(arr_list):
             arr_list[j + 1] = arr_list[j] # Slide element to the right
             yield {
                 "values": arr_list.copy(),
-                "highlight": [j, j + 1]
+                "highlight": [j, j + 1],
+                "swapped": True  # räknas som förflyttning
             }
             j -= 1    # proceed backwards
         arr_list[j + 1] = sorted_list
         yield {
             "values": arr_list.copy(),
-            "highlight": [j + 1]
+            "highlight": [j + 1],
+            "swapped": False
         }
 
 def merge(left_list, right_list):
@@ -110,7 +118,8 @@ def merge_sort_visual(arr_list):
         if end - start <= 1:
             yield {
                 "values": full_array.copy(),
-                "highlight": [start] if start < len(full_array) else []
+                "highlight": [start] if start < len(full_array) else [],
+                "swapped": False
             }
             return
 
@@ -141,7 +150,8 @@ def merge_sort_visual(arr_list):
             k += 1
             yield {
                 "values": arr.copy(),
-                "highlight": [k - 1]
+                "highlight": [k - 1],
+                "swapped": True
             }  # yield full array after each merge step
 
         # copy any remaining elements of left half
@@ -151,7 +161,8 @@ def merge_sort_visual(arr_list):
             k += 1
             yield {
                 "values": arr.copy(),
-                "highlight": [k - 1]
+                "highlight": [k - 1],
+                "swapped": True
             }
 
         while j < len(right):
@@ -160,7 +171,8 @@ def merge_sort_visual(arr_list):
             k += 1
             yield {
                 "values": arr.copy(),
-                "highlight": [k - 1]
+                "highlight": [k - 1],
+                "swapped": True
             }
 
     # starta sorteringen
@@ -190,18 +202,21 @@ def quick_sort(arr_list):
                 highlight = [i, j, end]
                 steps.append({
                     "values": arr_list.copy(),
-                    "highlight": highlight
+                    "highlight": highlight,
+                    "swapped": True
                 })
             else:
                 steps.append({
                     "values": arr_list.copy(),
-                    "highlight": highlight
+                    "highlight": highlight,
+                    "swapped": False
                 })
         # Place the pivot element att the correct position        
         arr_list[i+1], arr_list[end] = arr_list[end], arr_list[i+1]
         steps.append({
             "values": arr_list.copy(),
-            "highlight": [i + 1]
+            "highlight": [i + 1],
+            "swapped": True
         })
         return i + 1, steps  # Return the index of the pivot element and steps for visualization
 
@@ -219,9 +234,6 @@ def quick_sort(arr_list):
     yield from quick_sort_recursive(arr_list, 0, len(arr_list) - 1)
     yield {
         "values": arr_list.copy(),
-        "highlight": []
+        "highlight": [],
+        "swapped": False
     }
-
-#list = [5,3,10,2,1,6]
-#sort_list = merge_sort(list)
-#print(sort_list)
