@@ -4,6 +4,10 @@ import dash_bootstrap_components as dbc
 from components.layout import layout
 from utils.utils import generate_random_list, figure_layout
 from algorithms.sort_algorithms import bubble_sort, selection_sort, insertion_sort, merge_sort_visual, quick_sort
+
+PRIMARY_BAR_COLOR = "#0d6efd"
+TARGET_BAR_COLOR = "#dc3545"
+
 app = Dash(
     __name__,
     external_stylesheets=[
@@ -29,7 +33,7 @@ app.layout = layout()
 def clear_data_figure(n_clicks):
     if n_clicks:
         return [
-            go.Figure(data=[], layout={}),
+            build_bar_figure([]),
             None, 
             "Data has been successfully cleared",
             True,
@@ -52,26 +56,7 @@ def generate_data(n_clicks, size):
         return no_update, no_update, no_update, no_update,no_update
     list_data = generate_random_list(size)
     # The figure component takes two arguments: data and layout
-    fig = go.Figure(
-        data=[go.Bar(
-                x=list(range(1, size+1)),
-                y=list_data, 
-                marker_color="lightskyblue"
-            )
-        ]
-    )
-    tickvals, ticktext = figure_layout(list_data)
-    fig.update_layout(
-        title="Generated Random List",
-        xaxis=dict(
-            tickmode="array",
-            tickvals=tickvals,
-            ticktext=ticktext,
-            range=[0.5, size + 0.5]
-        ),
-        yaxis=dict(range=[0, max(list_data) + 20]),
-        margin=dict(l=20, r=20, t=40, b=20)
-    )
+    fig = build_bar_figure(list_data, title="Generated Random List")
     return [
         fig, 
         list_data,
@@ -87,6 +72,7 @@ def generate_data(n_clicks, size):
     Output("message","children"),
     Output("message","is_open"),
     Output("message","color"),
+    Output("info-algorithm", "children"),
     Input("start-btn","n_clicks"),
     State("algorithm-dropdown", "value"),
     State("stored-data", "data"),
@@ -100,6 +86,7 @@ def start_sort_algorithms(n_clicks, algo_drop, list_data):
             0,
             no_update,
             no_update,
+            no_update,
             no_update
         ]
     if list_data is None:
@@ -109,7 +96,8 @@ def start_sort_algorithms(n_clicks, algo_drop, list_data):
             0,
             "Please generate a dataset before starting the algorithm",
             True,
-            "danger"
+            "danger",
+            no_update
         ]
     
     if algo_drop == "bubble":
@@ -126,9 +114,10 @@ def start_sort_algorithms(n_clicks, algo_drop, list_data):
         steps_sort, 
         False, 
         0,
-        f"Started {algo_drop.capitalize()} sort seccuessfully",
+        f"Started {algo_drop.capitalize()} sort successfully",
         True,
-        "success"
+        "success",
+        algo_drop
     ]
 
 @app.callback(
@@ -141,28 +130,66 @@ def start_sort_algorithms(n_clicks, algo_drop, list_data):
 def update_sort_step(n_interval, steps, list_size):
     if steps is None or n_interval >= len(steps):
         return no_update
-    current_steps = steps[n_interval]
-    tickvals, ticktext = figure_layout(list_size)
-    sort_fig = go.Figure(
-        data=[go.Bar(
-                x=list(range(1, list_size+1)),
-                y=current_steps, 
-                marker_color="lightskyblue"
-            )
-        ]
-    )
-    sort_fig.update_layout(
-        xaxis=dict(
-            tickmode="array",
-            tickvals=tickvals,
-            ticktext=ticktext,
-            range=[0.5,list_size + 0.5]
-        ),
-        yaxis=dict(range=[0, max(current_steps) + 20]),
-        margin=dict(l=20, r=20, t=40, b=20)
-    )
+    step = steps[n_interval]
+
+    if isinstance(step, dict):
+        values = step.get("values", [])
+        highlight = step.get("highlight", [])
+    else:
+        values = step
+        highlight = []
+
+    sort_fig = build_bar_figure(values, highlight_indices=highlight)
     
     return sort_fig
-  
+
+# Callback for updating algorithm info
+#@app.callback(
+#    Output("info-algorithm", "children"),
+#    Output("info-steps","children"),
+#    Output("info-swaps","children"),
+#    Output("info-time","children"),
+#    Input("interval","n_intervals"),
+#    State("algorithm-dropdown", "value"),
+#    State("stored-data","value"),
+#    State("size-slider", "value")
+#)
+def build_bar_figure(values, highlight_indices=None, title=None):
+    values = list(values) if values is not None else []
+    highlight_indices = set(highlight_indices or [])
+    bar_count = len(values)
+
+    colors = [PRIMARY_BAR_COLOR] * bar_count
+    for index in highlight_indices:
+        if 0 <= index < bar_count:
+            colors[index] = TARGET_BAR_COLOR
+
+    bar_trace = go.Bar(
+        x=list(range(1, bar_count + 1)),
+        y=values,
+        marker_color=colors
+    )
+
+    tickvals, ticktext = figure_layout(values)
+    xaxis_config = dict(
+        tickmode="array",
+        tickvals=tickvals,
+        ticktext=ticktext,
+    )
+    if bar_count:
+        xaxis_config["range"] = [0.5, bar_count + 0.5]
+
+    yaxis_max = max(values) if values else 0
+    yaxis_config = dict(range=[0, yaxis_max + 20 if bar_count else 20])
+
+    fig = go.Figure(data=[bar_trace])
+    fig.update_layout(
+        title=title,
+        xaxis=xaxis_config,
+        yaxis=yaxis_config,
+        margin=dict(l=20, r=20, t=40 if title else 20, b=20)
+    )
+    return fig
+
 if __name__ == "__main__":
     app.run(debug=True)

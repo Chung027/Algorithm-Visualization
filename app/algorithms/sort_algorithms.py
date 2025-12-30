@@ -3,10 +3,14 @@ def bubble_sort(arr_list):
     arr_list = arr_list.copy()
     for i in range(len(arr_list)):
         # Jämförs alla element på varv bara fram sista osorterade elementet eftersom de i sista redan ligger rätt.
-        for j in range(len(arr_list)-i-1):
-            if arr_list[j] > arr_list[j+1]:
-                arr_list[j], arr_list[j+1] = arr_list[j+1], arr_list[j]
-            yield arr_list.copy()
+        for j in range(len(arr_list) - i - 1):
+            highlight = [j, j + 1]
+            if arr_list[j] > arr_list[j + 1]:
+                arr_list[j], arr_list[j + 1] = arr_list[j + 1], arr_list[j]
+            yield {
+                "values": arr_list.copy(),
+                "highlight": highlight
+            }
 
 def selection_sort(arr_list):
     arr_list = arr_list.copy()
@@ -16,12 +20,18 @@ def selection_sort(arr_list):
         # när vi jämför första index med rest index i lista och byta till rätt plats 
         # om första index är större än minsta index på höger list, det ska byta engång bara
         # efter det går vidare till nästa index och jämför med rest index
-        for j in range(i+1, len(arr_list)):
+        for j in range(i + 1, len(arr_list)):
             if arr_list[min_index] > arr_list[j]:
                 min_index = j
-            yield arr_list.copy()
+            yield {
+                "values": arr_list.copy(),
+                "highlight": [min_index, j]
+            }
         arr_list[i], arr_list[min_index] = arr_list[min_index], arr_list[i]
-        yield arr_list.copy()
+        yield {
+            "values": arr_list.copy(),
+            "highlight": [i, min_index]
+        }
 
 def insertion_sort(arr_list):
     """
@@ -37,11 +47,17 @@ def insertion_sort(arr_list):
         sorted_list = arr_list[i] # Parts to 2 list
         j = i - 1 # start comparing backwards
         while j >= 0 and arr_list[j] > sorted_list:
-            arr_list[j+1] = arr_list[j] # Slide element to the right
+            arr_list[j + 1] = arr_list[j] # Slide element to the right
+            yield {
+                "values": arr_list.copy(),
+                "highlight": [j, j + 1]
+            }
             j -= 1    # proceed backwards
-            yield arr_list.copy()
-        arr_list[j+1] = sorted_list
-        yield arr_list.copy()
+        arr_list[j + 1] = sorted_list
+        yield {
+            "values": arr_list.copy(),
+            "highlight": [j + 1]
+        }
 
 def merge(left_list, right_list):
     """
@@ -92,7 +108,10 @@ def merge_sort_visual(arr_list):
 
     def merge_sort_recursive(arr, start, end, full_array):
         if end - start <= 1:
-            yield full_array.copy()
+            yield {
+                "values": full_array.copy(),
+                "highlight": [start] if start < len(full_array) else []
+            }
             return
 
         mid = (start + end) // 2
@@ -120,20 +139,29 @@ def merge_sort_visual(arr_list):
                 arr[k] = right[j]
                 j += 1
             k += 1
-            yield arr.copy()  # yield full array after each merge step
+            yield {
+                "values": arr.copy(),
+                "highlight": [k - 1]
+            }  # yield full array after each merge step
 
         # copy any remaining elements of left half
         while i < len(left):
             arr[k] = left[i]
             i += 1
             k += 1
-            yield arr.copy()
+            yield {
+                "values": arr.copy(),
+                "highlight": [k - 1]
+            }
 
         while j < len(right):
             arr[k] = right[j]
             j += 1
             k += 1
-            yield arr.copy()
+            yield {
+                "values": arr.copy(),
+                "highlight": [k - 1]
+            }
 
     # starta sorteringen
     yield from merge_sort_recursive(arr, 0, len(arr), arr)
@@ -155,15 +183,28 @@ def quick_sort(arr_list):
         i = start - 1
         # Traverse the array from 'start' to 'end - 1'
         for j in range (start, end):  # j is to compare with pivot element
+            highlight = [j, end]
             if arr_list[j] <= pivot:
                 i += 1
                 arr_list[i], arr_list[j] = arr_list[j], arr_list[i]
-                steps.append(arr_list.copy())
+                highlight = [i, j, end]
+                steps.append({
+                    "values": arr_list.copy(),
+                    "highlight": highlight
+                })
+            else:
+                steps.append({
+                    "values": arr_list.copy(),
+                    "highlight": highlight
+                })
         # Place the pivot element att the correct position        
         arr_list[i+1], arr_list[end] = arr_list[end], arr_list[i+1]
-        steps.append(arr_list.copy())
+        steps.append({
+            "values": arr_list.copy(),
+            "highlight": [i + 1]
+        })
         return i + 1, steps  # Return the index of the pivot element and steps for visualization
-    
+
     def quick_sort_recursive(arr_list, start, end):
         # Continue sorting while the sub-array has more than one element
         if start < end:
@@ -176,7 +217,10 @@ def quick_sort(arr_list):
             yield from quick_sort_recursive(arr_list, pi + 1, end)
     # Initial call to the recursive quicksort function
     yield from quick_sort_recursive(arr_list, 0, len(arr_list) - 1)
-    yield arr_list.copy()
+    yield {
+        "values": arr_list.copy(),
+        "highlight": []
+    }
 
 #list = [5,3,10,2,1,6]
 #sort_list = merge_sort(list)

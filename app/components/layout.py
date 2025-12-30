@@ -95,6 +95,35 @@ def layout():
                         [
                             html.H4("Visualisering", className="text-center"),
                             dcc.Graph(id="sorting-graph",figure=fig_default ,style={"height": "70vh"}),
+                            html.Div(
+                                [
+                                    html.Span(
+                                        "",
+                                        style={
+                                            "display": "inline-block",
+                                            "width": "14px",
+                                            "height": "14px",
+                                            "backgroundColor": "#0d6efd",
+                                            "borderRadius": "2px",
+                                            "marginRight": "6px"
+                                        }
+                                    ),
+                                    html.Span("Element", className="me-3"),
+                                    html.Span(
+                                        "",
+                                        style={
+                                            "display": "inline-block",
+                                            "width": "14px",
+                                            "height": "14px",
+                                            "backgroundColor": "#dc3545",
+                                            "borderRadius": "2px",
+                                            "marginRight": "6px"
+                                        }
+                                    ),
+                                    html.Span("Tagert element"),
+                                ],
+                                className="d-flex align-items-center justify-content-center gap-2 mt-3",
+                            ),
                             dcc.Store(id="stored-data"),
                             dcc.Interval(id="interval", interval=100, n_intervals=0,disabled=True)
                         ],
