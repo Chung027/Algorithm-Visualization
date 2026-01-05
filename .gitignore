@@ -4,7 +4,6 @@ __pycache__/
 *$py.class
 # Virtual environments
 venv/
-.env/
 .venv/
 # macOS system files
 .DS_Store
@@ -12,3 +11,5 @@ venv/
 *.pyd
 # Logs
 *.log
+database/
+.database/
