@@ -51,7 +51,16 @@ def layout():
                                                        html.Tr([html.Td("Algorithm"), html.Td(id="info-algorithm")]),
                                                        html.Tr([html.Td("Steps"),html.Td(id="info-steps")]),
                                                        html.Tr([html.Td("Swaps"),html.Td(id="info-swaps")]),
-                                                       html.Tr([html.Td("Execution Time"),html.Td(id="info-time")])
+                                                       html.Tr([html.Td("Execution Time"),html.Td(id="info-time")]),
+                                                       dbc.Button(
+                                                            "Save",
+                                                            id="save-button",
+                                                            color="success",
+                                                            disabled=True,
+                                                            style={
+                                                                "marginTop":"15px"
+                                                            }
+                                                        )
                                                     ]
                                                 ),
                                             ],

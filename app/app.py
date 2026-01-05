@@ -2,6 +2,9 @@ from dash import Dash, html, Input, Output,State ,callback, no_update
 import plotly.graph_objs as go
 import dash_bootstrap_components as dbc
 import time
+import json
+import os
+from pathlib import Path
 from components.layout import layout
 from utils.utils import generate_random_list, figure_layout
 from algorithms.sort_algorithms import bubble_sort, selection_sort, insertion_sort, merge_sort_visual, quick_sort
@@ -17,6 +20,12 @@ app = Dash(
 )
 app.title = "Visualization sort algoritm"
 app.layout = layout()
+
+# Create a database folder at the project root using absolute path
+# ensuring it exists regardless of the current working directory
+DATABASE_FOLDER = os.path.join(Path(__file__).resolve().parents[1], "database")
+if not os.path.exists(DATABASE_FOLDER):
+    os.makedirs(DATABASE_FOLDER)
 
 # Primary color in the application
 PRIMARY_BAR_COLOR = "#0d6efd"
@@ -39,7 +48,7 @@ ALGORITHM_FUNCS = {
 }
 
 # Callback lives here for now to keep future maintenance simple
-@app.callback(
+@callback(
     Output("sorting-graph", "figure", allow_duplicate=True),
     Output("stored-data","data",allow_duplicate=True),
     Output("message","children",allow_duplicate=True),
@@ -67,7 +76,7 @@ def clear_data_figure(n_clicks):
         ]
     return (no_update,)*9
 
-@app.callback(
+@callback(
     Output("sorting-graph", "figure", allow_duplicate=True),
     Output("stored-data","data",allow_duplicate=True),
     Output("message","children",allow_duplicate=True),
@@ -138,6 +147,26 @@ def start_sort_algorithms(n_clicks, algo_drop, list_data):
             no_update
         ]
     
+    if not _is_raw_array(list_data):
+            msg = (
+                "Current data is not a raw array. Please click Clear or Generate new data."
+                if _is_steps(list_data)
+                else "Invalid data format. Please generate a dataset."
+            )
+            return [
+                no_update, 
+                no_update,
+                no_update,
+                msg, 
+                True, 
+                "danger",
+                no_update, 
+                no_update, 
+                no_update, 
+                no_update, 
+                no_update
+            ]
+
     algo_func = ALGORITHM_FUNCS.get(algo_drop)
     if not algo_func:
         return[
@@ -153,6 +182,7 @@ def start_sort_algorithms(n_clicks, algo_drop, list_data):
             no_update,
             no_update
         ]
+    
     # Record the start time for measuring the sorting algorithm duration
     start_time = time.perf_counter()
     steps_sort = list(algo_func(list_data))
@@ -172,12 +202,13 @@ def start_sort_algorithms(n_clicks, algo_drop, list_data):
         start_time
     ]
 
-@app.callback(
+@callback(
     Output("sorting-graph","figure", allow_duplicate=True),
     Output("info-steps","children", allow_duplicate=True),
     Output("info-swaps","children", allow_duplicate=True),
     Output("info-time","children", allow_duplicate=True),
     Output("interval","disabled", allow_duplicate=True),
+    Output("save-button","disabled"),
     Input("interval","n_intervals"),
     State("stored-data","data"),
     State("run-start","data"),
@@ -185,14 +216,28 @@ def start_sort_algorithms(n_clicks, algo_drop, list_data):
 )
 def update_sort_step(n_interval, steps, start_timestamp):
     if steps is None:
-        return no_update, no_update, no_update, no_update, True
+        return [
+            no_update, 
+            no_update, 
+            no_update, 
+            no_update, 
+            True, 
+            True
+        ]
 
     total_steps = len(steps)
     # If we've exhausted steps, stop the interval and freeze metrics
     if n_interval >= total_steps:
         total_swaps = sum(1 for s in steps if isinstance(s, dict) and s.get("swapped"))
         elapsed_time = (time.perf_counter() - start_timestamp) if start_timestamp else 0.0
-        return no_update, total_steps, total_swaps, f"{elapsed_time:.1f} s", True
+        return [
+            no_update, 
+            total_steps, 
+            total_swaps, 
+            f"{elapsed_time:.1f} s", 
+            True, 
+            False
+        ]
 
     step = steps[n_interval]
 
@@ -209,8 +254,64 @@ def update_sort_step(n_interval, steps, start_timestamp):
 
     sort_fig = build_bar_figure(values, highlight_indices=highlight)
     
-    return sort_fig, steps_done, swaps_done, f"{elapsed_time:.1f}s", False
+    return [
+        sort_fig, 
+        steps_done, 
+        swaps_done, 
+        f"{elapsed_time:.1f}s", 
+        False,
+        True
+    ]
 
+@callback(
+    Output("message","children",allow_duplicate=True),
+    Output("message","is_open",allow_duplicate=True),
+    Output("message","color",allow_duplicate=True),
+    Input("save-button","n_clicks"),
+    State("info-algorithm","children"),
+    State("size-slider","value"),
+    State("info-steps","children"),
+    State("info-swaps","children"),
+    State("info-time","children"),
+    prevent_initial_call=True
+)
+def save_data_json_list(n_clicks,algo_name, size,steps, swaps, time):
+    if n_clicks is None:
+        return no_update, no_update, no_update
+    
+    algorithms_data = {
+        "name": algo_name,
+        "size": f"{size} element",
+        "step": steps,
+        "swaps": swaps,
+        "Execution time": time
+    }
+
+    json_file = os.path.join(DATABASE_FOLDER, "algorithms_data.json")
+    if not os.path.exists(json_file):
+        # Create an empty list so we can append multiple reults over time
+        data = []
+        with open(json_file, "w") as f:
+            # Json.dump serializes the python object (list/dict) into JSON
+            # The indent agurment formats the Json file with indentation for better readability
+            json.dump(data, f, indent=2)
+
+    with open(json_file, "r") as f:
+        try:
+            data = json.load(f)
+        except json.JSONDecodeError:
+            data = []
+        data.append(algorithms_data)
+
+    with open(json_file, "w") as f:
+        json.dump(data, f, indent=2)
+        
+    return [
+        "Successfully save data",
+        True,
+        "success"
+    ]
+    
 def build_bar_figure(values, highlight_indices=None, title=None):
     values = list(values) if values is not None else []
     highlight_indices = set(highlight_indices or [])
@@ -247,6 +348,14 @@ def build_bar_figure(values, highlight_indices=None, title=None):
         margin=dict(l=20, r=20, t=40 if title else 20, b=20)
     )
     return fig
+
+def _is_raw_array(x):
+    # Used to verify that the stored data is a raw numeric array
+    return isinstance(x, list) and all(isinstance(v, int) for v in x)
+
+def _is_steps(x):
+    # Used to detect if the sotred data represents sorting steps (not raw input)
+    return isinstance(x, list) and all(isinstance(v, dict) for v in x)
 
 if __name__ == "__main__":
     app.run(debug=True)

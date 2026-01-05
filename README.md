@@ -5,7 +5,9 @@ An interactive web application built with Plotly Dash that visualizes how differ
 ## Features
 - Sorting algorithms: Bubble Sort, Selection Sort, Insertion Sort, Merge Sort, and Quick Sort  
 - Real-time animations powered by Dash and Dash Bootstrap Components  
-- Adjustable animation speed and array size  
+- Adjustable animation speed and array size
+- Informational panel displaying algorithm details for easy comparison
+- Option to save reults to a Json file
 
 ## Installation
 Create a virtual environment and activate it:
